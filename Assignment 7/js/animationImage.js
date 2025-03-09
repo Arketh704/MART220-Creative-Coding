@@ -3,8 +3,6 @@ class animationImage {
         this.fileNames = fileNames;
         this.x = x;
         this.y = y;
-        this.imageWidth = 430 / 10;
-        this.imageHeight = 519 / 10;
         this.w = width;
         this.h = height;
         this.images = [];
@@ -52,15 +50,6 @@ class animationImage {
         } else {
             console.error("Images not loaded");
         }
-    }
-
-    hasColided(x2, y2, w2, h2) {
-        return (
-            this.x < x2 + w2 &&
-            this.x + this.imageWidth > x2 &&
-            this.y < y2 + h2 &&
-            this.y + this.imageHeight > y2
-        );
     }
 
     setAnimation(fileNames) {

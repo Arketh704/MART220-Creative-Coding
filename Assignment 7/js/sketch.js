@@ -1,15 +1,15 @@
-// Global Variables
-var x, y;
+var myAnimation, idleAnimation;
+let ZombieFood, BadZombieFood;
+let numZombieFood = 10, numBadZombieFood = 5; // New variables to control the number of each food
 let cat, shroom, chatgpt, myFont;
 let shroomX = 260, shroomY = 245;
 let lastMoveTime = 0, moveInterval = 2000;
 let bgColor = "black", keyPressedFlag = false, isMoving = false;
-let myZombieFood = [], idleFileNames = [], walkFileNames = [];
+let myZombieFood = [], myBadZombieFood = [], idleFileNames = [], walkFileNames = [];
 let ramen, foodMoveInterval = 10000, lastFoodMoveTime = 0, timer = 35;
 let score = 0;
-var myAnimation, idleAnimation, ZombieFood;
+let backgroundMusic, zombieFoodSound, badZombieFoodSound;
 
-// Preload assets
 function preload() {
   for (let i = 1; i <= 5; i++) {
     walkFileNames.push('./assets/Walk' + i + '.png');
@@ -24,23 +24,32 @@ function preload() {
   cat = loadImage('images/popcat.gif');
   shroom = loadImage('images/shroom.png');
   chatgpt = loadImage('images/chatgpt.webp');
-  myFont = loadFont('Font/Quicksand.ttf');  
+  myFont = loadFont('Font/Quicksand.ttf');
+  backgroundMusic = loadSound('audio/backgroundMusic.wav');
+  zombieFoodSound = loadSound('audio/zombiefoodSound.wav');
+  badZombieFoodSound = loadSound('audio/badzombiefoodSound.wav');
 }
 
-// Main setup
 function setup() {
   createCanvas(800, 800);
   textFont(myFont);
   textSize(20);
   ramen = new Ramen();
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < numZombieFood; i++) {
     ZombieFood = new zombieFood(random(1, 800), random(1, 800));
     myZombieFood.push(ZombieFood);
   }
-  score = 0; // Reset score
+  for (let i = 0; i < numBadZombieFood; i++) {
+    BadZombieFood = new badzombieFood(random(1, 800), random(1, 800));
+    myBadZombieFood.push(BadZombieFood);
+  }
+
+  if (!backgroundMusic.isPlaying()) {
+    backgroundMusic.loop();
+  }
+  score = 0;
 }
 
-// Main draw
 function draw() {
   background(bgColor);
   image(chatgpt, 0, 0, chatgpt.width, chatgpt.height);
@@ -52,6 +61,10 @@ function draw() {
 
   for (let i = 0; i < myZombieFood.length; i++) {
     myZombieFood[i].drawFood();
+  }
+
+  for (let i = 0; i < myBadZombieFood.length; i++) {
+    myBadZombieFood[i].drawbadFood();
   }
 
   updateShroomPosition();
@@ -71,7 +84,7 @@ function draw() {
 
   updateTimer();
   displayTimer();
-  displayScore(); // Call displayScore to show the score on the canvas
+  displayScore();
 }
 
 // Update shroom position
@@ -91,6 +104,9 @@ function updateZombieFoodPosition() {
     for (let i = 0; i < myZombieFood.length; i++) {
       myZombieFood[i].updateFood(width, height);
     }
+    for (let i = 0; i < myBadZombieFood.length; i++) {
+      myBadZombieFood[i].updatebadFood(width, height);
+    }
     lastFoodMoveTime = currentTime;
   }
 }
@@ -101,7 +117,7 @@ function updateTimer() {
     timer--;
   }
   if (timer == 0) {
-    setup();
+    setup(); // Restart the game when the timer reaches 0
   }
 }
 
@@ -142,7 +158,6 @@ function handleKeyPress() {
   }
 }
 
-// Handle movement
 function handleMovement() {
   isMoving = false;
   if (keyIsDown(87)) { // W key
@@ -164,22 +179,35 @@ function handleMovement() {
     isMoving = true;
   }
 
-  for (let k = 0; k < myZombieFood.length; k++) {
-    if (myAnimation.hasColided(myZombieFood[k].x, myZombieFood[k].y, 25, 25)) {
+  for (let k = myZombieFood.length - 1; k >= 0; k--) {
+    if (collideRectCircle(myAnimation.x - myAnimation.w / 2, myAnimation.y - myAnimation.h / 2, myAnimation.w, myAnimation.h, myZombieFood[k].x, myZombieFood[k].y, 25)) {
       myZombieFood.splice(k, 1);
       score++;
+      zombieFoodSound.play();
+    }
+  }
+
+  for (let k = myBadZombieFood.length - 1; k >= 0; k--) {
+    if (collideRectCircle(myAnimation.x - myAnimation.w / 2, myAnimation.y - myAnimation.h / 2, myAnimation.w, myAnimation.h, myBadZombieFood[k].x, myBadZombieFood[k].y, 25)) {
+      myBadZombieFood.splice(k, 1);
+      score--;
+      badZombieFoodSound.play();
     }
   }
 }
 
-// Mouse event: changes broth color
 function mouseMoved() {
   if (ramen) {
     ramen.mouseMoved();
   }
 }
 
-// Reset flag when key is released
 function keyReleased() {
-  keyPressedFlag = false; // Reset the flag when the key is released
+  keyPressedFlag = false;
+}
+
+function mousePressed() {
+  if (!backgroundMusic.isPlaying()) {
+    backgroundMusic.loop();
+  }
 }
