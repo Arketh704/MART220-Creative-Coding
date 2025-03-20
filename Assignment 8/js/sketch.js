@@ -1,12 +1,11 @@
 var myAnimation, idleAnimation;
 let ZombieFood, BadZombieFood;
 let numZombieFood = 10, numBadZombieFood = 5; // New variables to control the number of each food
-let cat, shroom, chatgpt, myFont;
-let shroomX = 260, shroomY = 245;
+let chatgpt, myFont;
 let lastMoveTime = 0, moveInterval = 2000;
 let bgColor = "black", keyPressedFlag = false, isMoving = false;
 let myZombieFood = [], myBadZombieFood = [], idleFileNames = [], walkFileNames = [];
-let ramen, foodMoveInterval = 10000, lastFoodMoveTime = 0, timer = 35;
+let foodMoveInterval = 10000, lastFoodMoveTime = 0, timer = 35;
 let score = 0;
 let backgroundMusic, zombieFoodSound, badZombieFoodSound;
 
@@ -21,8 +20,6 @@ function preload() {
   }
   idleAnimation = new animationImage(idleFileNames, 0, 230, innerWidth / 8, innerHeight / 8, 10);
 
-  cat = loadImage('images/popcat.gif');
-  shroom = loadImage('images/shroom.png');
   chatgpt = loadImage('images/chatgpt.webp');
   myFont = loadFont('Font/Quicksand.ttf');
   backgroundMusic = loadSound('audio/backgroundMusic.wav');
@@ -34,7 +31,6 @@ function setup() {
   createCanvas(800, 800);
   textFont(myFont);
   textSize(20);
-  ramen = new Ramen();
   for (let i = 0; i < numZombieFood; i++) {
     ZombieFood = new zombieFood(random(1, 800), random(1, 800));
     myZombieFood.push(ZombieFood);
@@ -53,10 +49,6 @@ function setup() {
 function draw() {
   background(bgColor);
   image(chatgpt, 0, 0, chatgpt.width, chatgpt.height);
-  image(cat, 125, 65, cat.width / 5, cat.height / 5);
-  image(shroom, shroomX, shroomY, shroom.width / 6, shroom.height / 6);
-  ramen.drawRamen();
-  ramen.drawShapes();
   handleMovement();
 
   for (let i = 0; i < myZombieFood.length; i++) {
@@ -67,12 +59,8 @@ function draw() {
     myBadZombieFood[i].drawbadFood();
   }
 
-  updateShroomPosition();
   updateZombieFoodPosition();
 
-  if (keyIsPressed && !keyPressedFlag) {
-    handleKeyPress();
-  }
 
   if (isMoving) {
     myAnimation.updatePos(myAnimation.x, myAnimation.y);
@@ -87,15 +75,6 @@ function draw() {
   displayScore();
 }
 
-// Update shroom position
-function updateShroomPosition() {
-  let shroomTime = millis();
-  if (shroomTime - lastMoveTime > moveInterval) {
-    shroomX = random(width / 2);
-    shroomY = random(height / 2);
-    lastMoveTime = shroomTime;
-  }
-}
 
 // Update zombie food position
 function updateZombieFoodPosition() {
@@ -133,30 +112,7 @@ function displayScore() {
   text("Score: " + score, 10, 90);
 }
 
-// Handle key press events
-function handleKeyPress() {
-  keyPressedFlag = true;
-  switch (key.toLowerCase()) {
-    case 'r': 
-      bgColor = "red";
-      break;
-    case 'g':
-      bgColor = "green";
-      break;
-    case 'b':
-      bgColor = "blue";
-      break;
-    case 'p':
-      bgColor = "black";
-      break;
-    case 'o':
-      ramen.randomizeShapes();
-      break;
-    case 't':
-      ramen.resetShapes();
-      break;
-  }
-}
+
 
 function handleMovement() {
   isMoving = false;
@@ -196,15 +152,6 @@ function handleMovement() {
   }
 }
 
-function mouseMoved() {
-  if (ramen) {
-    ramen.mouseMoved();
-  }
-}
-
-function keyReleased() {
-  keyPressedFlag = false;
-}
 
 function mousePressed() {
   if (!backgroundMusic.isPlaying()) {
