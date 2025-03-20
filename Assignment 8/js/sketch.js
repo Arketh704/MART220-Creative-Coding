@@ -10,7 +10,8 @@ let countDown = 30;
 let countDownInterval;
 let health = 100;
 let boxes = 3;
-let boxPositions = []; // Store box positions
+let boxPositions = [];
+let myAnimation;
 
 function preload() {
   idleAnim = loadStrings("data/idle.txt");
@@ -25,40 +26,35 @@ function preload() {
 
 function setup() {
   createCanvas(800, 800);
-  generateBoxPositions(); // Generate random positions for boxes
   textFont(myFont);
   textSize(20);
   
   myAnimation = new MyCharacter(50, 50);
   myAnimation.loadAnimation('Idle', idleAnim);
   myAnimation.loadAnimation('Walk', walkAnim);
-
   countDownInterval = setInterval(updateCountDown, 1000);
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 30; i++) {
     let food;
-    if (floor(random(0, 3)) == 0) {
-      food = new zombieFood(random(100, 800), random(100, 800), false);
+    if (floor(random(0, 2)) == 0) {
+      food = new zombieFood(random(100, 750), random(100, 750), false);
     } else {
-      food = new zombieFood(random(100, 800), random(100, 800), true);
+      food = new zombieFood(random(100, 750), random(100, 750), true);
     }
     myZombieFood.push(food);
   }
   mousePressed = playBackgroundSound;
 
-  boximage = createSprite(200, 200, 1, 1,'static');
-  boximage.img = "./images/box.jpg";
-  boximage.scale = 0.05;
-  boximage.diameter = 60;
+  spawnBoxes(3);
 }
 
 function draw() {
   background(mygrass);
+  displayinfo();
   moveCharacter();
   drawFood();
-  displayScore();
-  displayCountDown();
-  displayhealth();
+  endgame();
+
 }
 
 function moveCharacter() {
@@ -78,6 +74,7 @@ function moveCharacter() {
     myAnimation.draw('Idle');
   }
 
+
   for (let i = 0; i < myZombieFood.length; i++) {
     myZombieFood[i].draw();
 
@@ -86,8 +83,7 @@ function moveCharacter() {
         score++;
         zombieFoodSound.play();
       } else {
-        score--;
-        health -= 10;
+        health -= 30;
         badZombieFoodSound.play();
       }
 
@@ -117,39 +113,42 @@ function updateCountDown() {
       clearInterval(countDownInterval);
   }
 }
-function displayCountDown() {
-  textSize(24);
-  text("Time left: " + countDown, width - 200, 50);
-}
-
-function displayScore() {
+function displayinfo() {
   fill(255);
-  textSize(24);
+  textSize(30);
   text("Score: " + score, 50, 50);
-}
-
-function displayhealth() {
-  fill(255);
-  textSize(24);
-  text("Health: " + health, 50, 100);
+  text("Health: " + health, 200, 50);
+  text("Time Left: " + countDown, 425, 50);
 }
 
 function replayAnimation() {
   myAnimation.reset();
 }
 
-function generateBoxPositions() {
-  for (let i = 0; i < boxes; i++) {
-    let x = random(width); // Randomize x position
-    let y = random(height); // Randomize y position
-    let size = random(20, 50); // Random size between 20 and 50
-    boxPositions.push({ x, y, size }); // Store position and size
+function endgame(){
+  if(countDown == 0 || health <= 0){
+    backgroundMusic.stop();
+    noLoop();
+    fill(255);
+    textSize(48);
+    text("Game Over", width/2 - 100, height/2);
+  }
+  else if(score == 10){
+    backgroundMusic.stop();
+    noLoop();
+    fill(255);
+    textSize(48);
+    text("You Win", width/2 - 100, height/2);
+
   }
 }
 
-function drawBoxes() {
-  for (let i = 0; i < boxPositions.length; i++) {
-    let box = boxPositions[i];
-    image(mycrate, box.x, box.y, box.size, box.size); // Draw the box at its static position
+function spawnBoxes(count) {
+  for (let i = 0; i < count; i++) {
+    let boximage = createSprite(random(50, 800), random(50, 800), 'static');
+    boximage.img = "./images/box.jpg";
+    boximage.scale = 0.05;
+    boximage.width = 100;
+    boximage.height = 150;
   }
 }
