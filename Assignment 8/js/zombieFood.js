@@ -1,29 +1,24 @@
-class zombieFood 
-{
-    constructor(x, y) 
-    {
-        this.x = x;
-        this.y = y;
-    }
+class zombieFood {
+  constructor(x, y, isGood) {
+    this.x = x;
+    this.y = y;
+    this.isGood = isGood;
+    this.foodPiece = new Sprite(x, y, 30);
+  }
 
-    drawFood() 
-    {
-        push();
-        strokeWeight(0);
-        fill('white');
-        circle(this.x, this.y + 40, 10);
-        fill('white');
-        circle(this.x + 7, this.y + 40, 10);
-        fill('white');
-        rect(this.x, this.y, 8, 40);
-        fill('red');
-        ellipse(this.x + 4, this.y, 30, 55);
-        pop();
+  draw() {
+    if (this.isGood) {
+        this.foodPiece.color = "green"
+    } else {
+        this.foodPiece.color = "red"
     }
+  }
 
-    updateFood(canvasWidth, canvasHeight)
-    {
-        this.x = Math.random() * canvasWidth;
-        this.y = Math.random() * canvasHeight;
-    }
+
+  updatePosition(newX, newY) {
+    this.x = newX;
+    this.y = newY;
+    this.foodPiece.position.x = newX;
+    this.foodPiece.position.y = newY;
+  }
 }

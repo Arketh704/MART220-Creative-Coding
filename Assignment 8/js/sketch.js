@@ -1,160 +1,155 @@
-var myAnimation, idleAnimation;
-let ZombieFood, BadZombieFood;
-let numZombieFood = 10, numBadZombieFood = 5; // New variables to control the number of each food
-let chatgpt, myFont;
+var idleAnim, walkAnim;
+let zombieFoodInstance;
+let myFont;
 let lastMoveTime = 0, moveInterval = 2000;
 let bgColor = "black", keyPressedFlag = false, isMoving = false;
-let myZombieFood = [], myBadZombieFood = [], idleFileNames = [], walkFileNames = [];
-let foodMoveInterval = 10000, lastFoodMoveTime = 0, timer = 35;
+let myZombieFood = [];
 let score = 0;
 let backgroundMusic, zombieFoodSound, badZombieFoodSound;
+let countDown = 30;
+let countDownInterval;
+let health = 100;
+let boxes = 3;
+let boxPositions = []; // Store box positions
 
 function preload() {
-  for (let i = 1; i <= 5; i++) {
-    walkFileNames.push('./assets/Walk' + i + '.png');
-  }
-  myAnimation = new animationImage(walkFileNames, 0, 230, innerWidth / 8, innerHeight / 8, 5);
-
-  for (let i = 1; i <= 10; i++) {
-    idleFileNames.push('./assets/Idle' + i + '.png');
-  }
-  idleAnimation = new animationImage(idleFileNames, 0, 230, innerWidth / 8, innerHeight / 8, 10);
-
-  chatgpt = loadImage('images/chatgpt.webp');
+  idleAnim = loadStrings("data/idle.txt");
+  walkAnim = loadStrings("data/walk.txt");
   myFont = loadFont('Font/Quicksand.ttf');
   backgroundMusic = loadSound('audio/backgroundMusic.wav');
   zombieFoodSound = loadSound('audio/zombiefoodSound.wav');
   badZombieFoodSound = loadSound('audio/badzombiefoodSound.wav');
+  mygrass = loadImage('images/grass.jpg');
+  mycrate = loadImage('images/box.jpg');
 }
 
 function setup() {
   createCanvas(800, 800);
+  generateBoxPositions(); // Generate random positions for boxes
   textFont(myFont);
   textSize(20);
-  for (let i = 0; i < numZombieFood; i++) {
-    ZombieFood = new zombieFood(random(1, 800), random(1, 800));
-    myZombieFood.push(ZombieFood);
-  }
-  for (let i = 0; i < numBadZombieFood; i++) {
-    BadZombieFood = new badzombieFood(random(1, 800), random(1, 800));
-    myBadZombieFood.push(BadZombieFood);
-  }
+  
+  myAnimation = new MyCharacter(50, 50);
+  myAnimation.loadAnimation('Idle', idleAnim);
+  myAnimation.loadAnimation('Walk', walkAnim);
 
-  if (!backgroundMusic.isPlaying()) {
-    backgroundMusic.loop();
+  countDownInterval = setInterval(updateCountDown, 1000);
+
+  for (let i = 0; i < 20; i++) {
+    let food;
+    if (floor(random(0, 3)) == 0) {
+      food = new zombieFood(random(100, 800), random(100, 800), false);
+    } else {
+      food = new zombieFood(random(100, 800), random(100, 800), true);
+    }
+    myZombieFood.push(food);
   }
-  score = 0;
+  mousePressed = playBackgroundSound;
+
+  boximage = createSprite(200, 200, 1, 1,'static');
+  boximage.img = "./images/box.jpg";
+  boximage.scale = 0.05;
+  boximage.diameter = 60;
 }
 
 function draw() {
-  background(bgColor);
-  image(chatgpt, 0, 0, chatgpt.width, chatgpt.height);
-  handleMovement();
+  background(mygrass);
+  moveCharacter();
+  drawFood();
+  displayScore();
+  displayCountDown();
+  displayhealth();
+}
+
+function moveCharacter() {
+  if (kb.pressing('d')) {
+    myAnimation.updatePosition('forward');
+    myAnimation.draw('Walk');
+  } else if (kb.pressing('a')) {
+    myAnimation.updatePosition('reverse');
+    myAnimation.draw('Walk');
+  } else if (kb.pressing('w')) {
+    myAnimation.updatePosition('up');
+    myAnimation.draw('Walk');
+  } else if (kb.pressing('s')) {
+    myAnimation.updatePosition('down');
+    myAnimation.draw('Walk');
+  } else {
+    myAnimation.draw('Idle');
+  }
 
   for (let i = 0; i < myZombieFood.length; i++) {
-    myZombieFood[i].drawFood();
-  }
+    myZombieFood[i].draw();
 
-  for (let i = 0; i < myBadZombieFood.length; i++) {
-    myBadZombieFood[i].drawbadFood();
-  }
+    if (myAnimation.isColliding(myZombieFood[i].foodPiece)) {
+      if (myZombieFood[i].isGood) {
+        score++;
+        zombieFoodSound.play();
+      } else {
+        score--;
+        health -= 10;
+        badZombieFoodSound.play();
+      }
 
-  updateZombieFoodPosition();
-
-
-  if (isMoving) {
-    myAnimation.updatePos(myAnimation.x, myAnimation.y);
-    myAnimation.drawAnimation();
-  } else {
-    idleAnimation.updatePos(myAnimation.x, myAnimation.y);
-    idleAnimation.drawAnimation();
-  }
-
-  updateTimer();
-  displayTimer();
-  displayScore();
-}
-
-
-// Update zombie food position
-function updateZombieFoodPosition() {
-  let currentTime = millis();
-  if (currentTime - lastFoodMoveTime > foodMoveInterval) {
-    for (let i = 0; i < myZombieFood.length; i++) {
-      myZombieFood[i].updateFood(width, height);
+      myZombieFood[i].foodPiece.remove();
     }
-    for (let i = 0; i < myBadZombieFood.length; i++) {
-      myBadZombieFood[i].updatebadFood(width, height);
-    }
-    lastFoodMoveTime = currentTime;
   }
 }
 
-// Update and display timer
-function updateTimer() {
-  if (frameCount % 60 == 0 && timer > 0) {
-    timer--;
-  }
-  if (timer == 0) {
-    setup(); // Restart the game when the timer reaches 0
+function drawFood() {
+  for (let i = 0; i < myZombieFood.length; i++) {
+    myZombieFood[i].draw();
   }
 }
 
-function displayTimer() {
-  textSize(32);
-  fill(255);
-  text("You have: " + timer + " seconds left", 10, 50);
+function playBackgroundSound() {
+  if (!backgroundMusic.isPlaying() && getAudioContext().state !== 'running') {
+    userStartAudio().then(() => {
+      backgroundMusic.play();
+    }).catch(err => console.error("Audio context could not start:", err));
+  }
+}
+
+
+function updateCountDown() {
+  countDown--;
+  if (countDown == 0) {
+      clearInterval(countDownInterval);
+  }
+}
+function displayCountDown() {
+  textSize(24);
+  text("Time left: " + countDown, width - 200, 50);
 }
 
 function displayScore() {
-  textSize(32);
   fill(255);
-  text("Score: " + score, 10, 90);
+  textSize(24);
+  text("Score: " + score, 50, 50);
 }
 
+function displayhealth() {
+  fill(255);
+  textSize(24);
+  text("Health: " + health, 50, 100);
+}
 
+function replayAnimation() {
+  myAnimation.reset();
+}
 
-function handleMovement() {
-  isMoving = false;
-  if (keyIsDown(87)) { // W key
-    myAnimation.y -= 2;
-    isMoving = true;
-  }
-  if (keyIsDown(83)) { // S key
-    myAnimation.y += 2;
-    isMoving = true;
-  }
-  if (keyIsDown(65)) { // A key
-    myAnimation.x -= 2;
-    myAnimation.setFlip(-1); // Flip left
-    isMoving = true;
-  }
-  if (keyIsDown(68)) { // D key
-    myAnimation.x += 2;
-    myAnimation.setFlip(1); // Flip right
-    isMoving = true;
-  }
-
-  for (let k = myZombieFood.length - 1; k >= 0; k--) {
-    if (collideRectCircle(myAnimation.x - myAnimation.w / 2, myAnimation.y - myAnimation.h / 2, myAnimation.w, myAnimation.h, myZombieFood[k].x, myZombieFood[k].y, 25)) {
-      myZombieFood.splice(k, 1);
-      score++;
-      zombieFoodSound.play();
-    }
-  }
-
-  for (let k = myBadZombieFood.length - 1; k >= 0; k--) {
-    if (collideRectCircle(myAnimation.x - myAnimation.w / 2, myAnimation.y - myAnimation.h / 2, myAnimation.w, myAnimation.h, myBadZombieFood[k].x, myBadZombieFood[k].y, 25)) {
-      myBadZombieFood.splice(k, 1);
-      score--;
-      badZombieFoodSound.play();
-    }
+function generateBoxPositions() {
+  for (let i = 0; i < boxes; i++) {
+    let x = random(width); // Randomize x position
+    let y = random(height); // Randomize y position
+    let size = random(20, 50); // Random size between 20 and 50
+    boxPositions.push({ x, y, size }); // Store position and size
   }
 }
 
-
-function mousePressed() {
-  if (!backgroundMusic.isPlaying()) {
-    backgroundMusic.loop();
+function drawBoxes() {
+  for (let i = 0; i < boxPositions.length; i++) {
+    let box = boxPositions[i];
+    image(mycrate, box.x, box.y, box.size, box.size); // Draw the box at its static position
   }
 }
