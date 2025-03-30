@@ -1,0 +1,8 @@
+assets/attack1.png
+assets/attack2.png
+assets/attack3.png
+assets/attack4.png
+assets/attack5.png
+assets/attack6.png
+assets/attack7.png
+assets/attack8.png
